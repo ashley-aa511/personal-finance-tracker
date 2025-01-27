@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Tracker</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/scripts.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+    <main>
+    <h1 id="personal">Personal Finance Tracker</h1>
+    
+    <!-- Form to add transactions -->
+    <form id="transaction-form">
+        <input type="number" id="amount" placeholder="Amount" required>
+        <input type="text" id="category" placeholder="Category (e.g., Groceries, Rent)" required>
+        <select id="type" required>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+        </select>
+        <button type="submit">Add Transaction</button>
+    </form>
+    
+    <!-- Table to display transactions -->
+    <h2 id="head">Transactions</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th>Actions</th> <!-- Added column for actions like delete -->
+            </tr>
+        </thead>
+        <tbody id="transactions">
+            <!-- Transaction rows will be dynamically added here -->
+        </tbody>
+    </table>
+
+
+    <!-- Total Income and Expenses Section -->
+    <div id="total-summary">
+        <h2>Total Income and Expenses</h2>
+        <p><strong>Total Income: </strong><span id="total-income">$0</span></p>
+        <p><strong>Total Expenses: </strong><span id="total-expenses">$0</span></p>
+    </div>
+
+    <div class="export-container"> 
+    <a href="{{ url_for('export_transactions') }}">
+        <button>Export Transactions to CSV</button>
+    </a>
+    </div>
+    <div>
+    <button id="view-summary"> 
+    <a href="/summary">View Monthly Summary</a>
+   </button>
+   </div>
+   </main>
+   <a href="/" id="back-to-landing-page"> Back to Home page Page</a>
+   </body>
+</html>
+

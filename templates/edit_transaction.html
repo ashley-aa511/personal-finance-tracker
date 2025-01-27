@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Transaction</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <h1>Edit Transaction</h1>
+    
+    <form method="POST" action="{{ url_for('edit_transaction', id=transaction.id) }}">
+        <input type="number" name="amount" value="{{ transaction.amount }}" placeholder="Amount" required>
+        
+        <!-- Predefined Categories -->
+        <select name="category" required>
+            <option value="Groceries" {% if transaction.category == 'Groceries' %}selected{% endif %}>Groceries</option>
+            <option value="Rent" {% if transaction.category == 'Rent' %}selected{% endif %}>Rent</option>
+            <option value="Entertainment" {% if transaction.category == 'Entertainment' %}selected{% endif %}>Entertainment</option>
+            <option value="Utilities" {% if transaction.category == 'Utilities' %}selected{% endif %}>Utilities</option>
+            <option value="Healthcare" {% if transaction.category == 'Healthcare' %}selected{% endif %}>Healthcare</option>
+            <option value="Other" {% if transaction.category == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+
+        <!-- Income or Expense Type -->
+        <select name="type" required>
+            <option value="income" {% if transaction.type == 'income' %}selected{% endif %}>Income</option>
+            <option value="expense" {% if transaction.type == 'expense' %}selected{% endif %}>Expense</option>
+        </select>
+        
+        <button type="submit">Update Transaction</button>
+    </form>
+    
+    <br>
+    <a href="{{ url_for('app_page') }}">Back to Transactions</a>
+
+</body>
+</html>
