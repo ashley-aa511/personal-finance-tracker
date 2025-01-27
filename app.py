@@ -1,11 +1,9 @@
-from flask import Flask, request, jsonify, render_template, flash, redirect, url_for
+from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, Response
 import csv
 from io import StringIO
-from flask import Response
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy import func
-
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///finance.db'
@@ -36,15 +34,30 @@ def app_page():
 
 @app.route('/add-transaction', methods=['POST'])
 def add_transaction():
-    data = request.json
-    new_transaction = Transaction(
-        amount=data['amount'],
-        category=data['category'],
-        type=data['type']
-    )
-    db.session.add(new_transaction)
-    db.session.commit()
-    return jsonify({'message': 'Transaction added successfully!'}), 201
+    try:
+        # Parse JSON data from the request
+        data = request.get_json()
+        amount = data.get('amount')
+        category = data.get('category')
+        transaction_type = data.get('type')
+
+        # Validate required fields
+        if amount is None or category is None or transaction_type is None:
+            return jsonify({'error': 'All fields are required!'}), 400
+
+        # Create the transaction object and save to the database
+        transaction = Transaction(
+            amount=float(amount),
+            category=category,
+            type=transaction_type
+        )
+        db.session.add(transaction)
+        db.session.commit()
+
+        return jsonify({'message': 'Transaction added successfully'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/transactions', methods=['GET'])
 def get_transactions():
@@ -60,16 +73,19 @@ def get_transactions():
     ]
     return jsonify(result)
 
-@app.route('/delete-transaction/<int:id>', methods=['GET'])
+@app.route('/delete-transaction/<int:id>', methods=['DELETE'])
 def delete_transaction(id):
-    transaction = Transaction.query.get(id)
-    if transaction:
+    try:
+        transaction = Transaction.query.get(id)
+        if not transaction:
+            return jsonify({'error': 'Transaction not found'}), 404
+
         db.session.delete(transaction)
         db.session.commit()
-        flash('Transaction deleted successfully.')
-    else:
-        flash('Transaction not found.')
-    return redirect(url_for('app_page'))  # Redirect to the main app page after deleting
+        return jsonify({'message': 'Transaction deleted successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/export-transactions')
 def export_transactions():
@@ -85,33 +101,24 @@ def export_transactions():
     output.seek(0)
     return Response(output, mimetype='text/csv', headers={'Content-Disposition': 'attachment; filename=transactions.csv'})
 
-# Monthly Summary Route
 @app.route('/summary')
 def summary():
-    # Get the current month and year
     current_month = datetime.utcnow().month
     current_year = datetime.utcnow().year
-    
+
     # Query transactions for the current month and group by category
     transactions = db.session.query(
         func.sum(Transaction.amount).label('total_amount'),
-        Transaction.category,
-        func.strftime('%Y-%m', Transaction.date).label('month')
+        Transaction.category
     ).filter(
         func.extract('month', Transaction.date) == current_month,
         func.extract('year', Transaction.date) == current_year
     ).group_by(Transaction.category).all()
 
-    # Convert SQLAlchemy Row object to a list of dictionaries
-    transactions_list = [{
-        'category': t.category,
-        'total_amount': t.total_amount
-    } for t in transactions]
-
-    # Calculate total amount
+    # Convert to a list of dictionaries
+    transactions_list = [{'category': t.category, 'total_amount': t.total_amount} for t in transactions]
     total_amount = sum(t['total_amount'] for t in transactions_list)
 
-    # Render the monthly summary page with the results
     return render_template('summary.html', 
                            transactions=transactions_list,
                            total_amount=total_amount,
